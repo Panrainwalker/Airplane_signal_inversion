@@ -10,7 +10,7 @@ clc;clear;close all
 
 %% parameters (Time, Stencil, grid, media, source)
 %%%%% Time %%%%%
-T_total = 120.0;     % unit (s)
+T_total = 30.0;     % unit (s)
 
 %%%%% grid %%%%%
 nz=500 + 6;
@@ -55,7 +55,7 @@ nt = round(T_total/dt) + 1;
 ndamp = 50;
 
 fc = 5;                   % 固定频率 Hz
-v0 = 30;                  % 源速度 m/s
+v0 = 120;                  % 源速度 m/s
 src_iz = ndamp+30;  % 固定深度
 src_ix_start = ndamp + 10;
 
@@ -91,7 +91,7 @@ MACB = -MACF(end:-1:1); % backward
 
 %% station 
 stax = round(nx/2);
-staz = nz-ndamp-10;
+staz = nz-ndamp-300;
 % staz = round(nz/2)
 %% absorbing boundary
 damp = ones(nz,nx);
@@ -132,8 +132,7 @@ sigma = (3*dt*Vs_min)/(4*dx); % for filter
 flag_snap = 0;
 gif_save= 1;
 plot_sta = 1;
-gif_filename = 'snapshot.gif';  % GIF output filename
-sta_name = '1';
+sta_name = '3';
 
 
 
@@ -193,45 +192,125 @@ saveas(gcf, fullfile('output', ['station',sta_name, '.png']));
 print(gcf, fullfile('output', ['station' ,sta_name,'.pdf']), '-dpdf', '-r300');
 
 data = [t; Pr];
-save(fullfile('output', 'station.txt'), 'data', '-ascii');
+save(fullfile('output', ['station',sta_name, '.txt']), 'data', '-ascii');
 end
 
 %% Time-frequency
+data = load(fullfile('output', ['station', sta_name, '.txt']));
 fs = 1 / (data(1,2) - data(1,1));  % 采样率
 signal = data(2,:);         % 截取信号
 dt = 1 / fs;
 
-% === 补零 ===
-Npad = 1024;  % 可以根据需要设置为1024或更高
-signal_pad = [zeros(1,Npad), signal, zeros(1,Npad)];
+% % === 补零 ===
+% Npad = 2048;  % 可以根据需要设置为1024或更高
+% signal_pad = [zeros(1,Npad), signal, zeros(1,Npad)];
 
 % === 时间向量 ===
-tvec = linspace(0, length(signal_pad)*dt, length(signal_pad));
+% tvec = linspace(0, length(signal_pad)*dt, length(signal_pad));
 
 % === 绘图 ===
 tiledlayout(2,1)
 
 % --- 子图 1：补零后的原始信号 ---
 nexttile
-plot(tvec, signal_pad, 'k')
+plot(data(1,:), data(2,:), 'k')
 xlabel('Time (s)')
-ylabel('Amplitude')
-title('Zero-padded Signal')
+ylabel('Amplitude(count)')
+title('Signal')
 set(gca, 'FontSize', 20)
 grid on
-
+  xlim([2 25]);
 % --- 子图 2：Spectrogram ---
-nexttile
-[s, f, t] = spectrogram(signal_pad, 128, 32, 128, fs, 'yaxis');
-imagesc(t, f, abs(s))
-axis xy
-colormap(jet)
-xlabel('Time (s)')
-ylabel('Frequency (Hz)')
-title('Spectrogram (1024-point window, 512 overlap)')
-set(gca, 'FontSize', 20)
-colorbar
 
-% 可选频率范围限制和参考线
-ylim([0 fc*2])
-yline(fc, 'w--', 'f_c = 5 Hz', 'LineWidth', 2, 'FontSize', 14, 'LabelHorizontalAlignment', 'left')
+% doppler effect
+%four parameters 
+L = (staz-src_iz)*(length_z/nz);
+
+t0=15.75;
+v0=v0;
+fc=fc;
+t=data(1,:);
+
+%theory solution
+t_ref = ( (t-t0) -sqrt( (t-t0).^2-(1-(v0/Vp(1,1)).^2).*((t-t0).^2-(L^2/Vp(1,1)^2))) ) ...
+    ./ (1-(v0/Vp(1,1))^2);
+f_sta = fc .* (1./(1+ ((v0./Vp(1,1)).*(v0.*t_ref./sqrt(L.^2+(v0.*t_ref).^2)) )));
+
+
+
+nexttile
+hold on
+[s, f, t] = spectrogram(data(2,:), 256, 128, 256, fs, 'yaxis');
+temp = log10(abs(s));
+pcolor(t,f,temp);
+h1 = plot(data(1,:)-100*dt, f_sta, 'w-', 'LineWidth', 4);  % 解析轨迹
+h2 = yline(fc, 'w--', ['f_c = ', num2str(fc), ' Hz'], ...
+    'LineWidth', 2, ...
+    'FontSize', 18, ...
+    'LabelHorizontalAlignment', 'left');
+clim([max(temp(:))/1.3 max(temp(:))*0.9])
+ylabel('Frequency (Hz)')
+xlabel('Time (s)')
+colormap("turbo");
+colorbar
+ ylim([fc*0.5 fc*2]);
+  xlim([2 25]);
+shading interp;
+set(gca,'FontSize',20)
+legend([h1 h2], { 'Analytical Solution'}, ...
+    'Location', 'northeast', ...
+    'FontSize', 16, ...
+    'TextColor', 'w', ...
+    'EdgeColor', 'k', ...           
+    'Color', 'k', ...               
+    'Box', 'on');  
+
+annotation_text = {...
+    ['f_c = ', num2str(fc), ' Hz'], ...
+    ['v_0 = ', num2str(v0), ' m/s'], ...
+    ['L = ', num2str(L), ' m'], ...
+    ['t_0 = ', num2str(t0), ' s']};
+
+annotation('textbox', [0.8, 0.3, 0.1, 0.1], ...
+    'String', annotation_text, ...
+    'EdgeColor', 'w', ...               % 白色边框
+    'LineWidth', 1.5, ...               % 可选：加粗边框
+    'FontSize', 16, ...
+    'Color', 'k', ...
+    'BackgroundColor', 'w', ...
+    'Interpreter', 'tex');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function cmap = seismic_colormap(m)
+    if nargin < 1
+        m = 256; % 默认256色
+    end
+    % 线性蓝->白->红分三段生成
+    n = floor(m/2);
+    blue = [linspace(0,1,n)', linspace(0,1,n)', ones(n,1)];    % 蓝到白
+    red  = [ones(m-n,1), linspace(1,0,m-n)', linspace(1,0,m-n)']; % 白到红
+    cmap = [blue; red];
+end
