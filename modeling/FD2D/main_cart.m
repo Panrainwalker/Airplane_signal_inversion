@@ -1,0 +1,237 @@
+% -------------------------------------------------------------------------
+
+% Author: Yuxing Pan (panyx2023@mail.sustech.edu.cn)
+% Affiliation: Southern University of Science and Technology (SUSTech)
+% Date: Jun 5, 2025
+% -------------------------------------------------------------------------
+%%%%%%
+
+clc;clear;close all
+
+%% parameters (Time, Stencil, grid, media, source)
+%%%%% Time %%%%%
+T_total = 120.0;     % unit (s)
+
+%%%%% grid %%%%%
+nz=500 + 6;
+nx=1000 + 6;
+length_z=2000;
+length_x=4000; % length of x (m)
+
+topo = 0 + zeros(1, nx); % topography
+
+Flag_grid = 1; % 1: Cartesian Grid  /  2: Curvilinear Grid
+
+Grid_disp = 0; 
+
+%%%%% media %%%%%
+Flag_media = 1;
+Media_disp = 0;
+
+
+
+%% Grid initial
+Grid_init_t
+
+
+
+
+
+%% Media initial
+Media_init_t
+
+CFL=1.2;
+dt = ( CFL * dh / Vp_max) ;
+% dt = 1e-5 ;
+nt = round(T_total/dt) + 1;
+
+
+%%
+
+%%%%% source %%%%%
+% -----------------------
+% Moving source along x
+% -----------------------
+ndamp = 50;
+
+fc = 5;                   % 固定频率 Hz
+v0 = 30;                  % 源速度 m/s
+src_iz = ndamp+30;  % 固定深度
+src_ix_start = ndamp + 10;
+
+% Source path in X
+src_ix_start = ndamp+10;
+src_ix_end = nx-ndamp+10;
+src_ix_vec = src_ix_start : 1 : src_ix_end;  % All X positions the source moves through
+Ns = length(src_ix_vec);  % Number of sources
+
+t = (0:nt-1) * dt;
+stf = sin(2 * pi * fc * t);   % 全时间长度的15Hz正弦波
+
+%% Stencil 
+Stencil_t;
+
+RK4a = rk_coef{1}{1};
+RK4b = rk_coef{1}{2};
+RK6a = rk_coef{2}{1};
+RK6b = rk_coef{2}{2};
+
+half_fd_stentil = 3;
+ni1 = half_fd_stentil+1;
+ni2 = nx-half_fd_stentil;
+nk1 = half_fd_stentil+1;
+nk2 = nz-half_fd_stentil;
+
+izvec = nk1 : nk2;     % interior z
+ixvec = ni1 : ni2;     % interior x
+
+
+MACF = [-0.30874,-0.6326,1.233,-0.3334,0.04168]; % forward
+MACB = -MACF(end:-1:1); % backward
+
+%% station 
+stax = round(nx/2);
+staz = nz-ndamp-10;
+% staz = round(nz/2)
+%% absorbing boundary
+damp = ones(nz,nx);
+ivec = ni1 : ni1+ndamp-1;
+jvec = 1 : ndamp;
+%-- z1/z2
+for i = ni1 : ni2
+    damp(ivec      ,i) = ((exp(-( (0.015*(ndamp-jvec)).^2 ) )).^10)';
+    damp(nk2-ndamp+1:nk2,i) = ((exp(-( (0.015*(jvec      )).^2 ) )).^10)';
+end
+%-- x1/x2
+for k = nk1 : nk2
+    damp(k,ivec      ) = min( (exp(-( (0.015*(ndamp-jvec)).^2 ) )).^10, ...
+                                 damp(k,ivec) );
+    damp(k,ni2-ndamp+1:ni2) = min( (exp(-( (0.015*(jvec      )).^2 ) )).^10, ...
+                                 damp(k,ni2-ndamp+1:ni2) );
+end
+
+
+%% solver
+
+RK4a = RK4a .* dt;
+RK4b = RK4b .* dt;
+% RK6a = RK6a .* dt;
+% RK6b = RK6b .* dt;
+
+
+dx = xi_gd(2);
+dz = abs(zt_gd(2));
+MACF = MACF / dx;
+MACB = MACB / dx;
+
+CLT = CLT /dx;
+sigma = (3*dt*Vs_min)/(4*dx); % for filter
+
+
+
+flag_snap = 0;
+gif_save= 1;
+plot_sta = 1;
+gif_filename = 'snapshot.gif';  % GIF output filename
+sta_name = '1';
+
+
+
+
+% 运行 MAC 模型
+sv_mac_rk_cart_ac_allstage;
+Vzr_mac = Vzr;  % 保存结果
+
+% sv_mac_rk_cart_allstage_noabs;
+% Vzr_mac_noasb = Vzr;  % 保存结果
+
+
+% sv_mac_rk_cart_os_allstage;
+% Vzr_os = Vzr;  % 保存结果
+
+
+% sv_ctl_rk_cart_allstage;
+% sv_flt_rk_cart_allstage;
+
+
+
+
+
+
+%%
+% figure
+% plot(Vzr)
+if plot_sta ==1
+
+figure
+plot(Pr / max(abs(Pr)), 'r', 'DisplayName', 'MAC Model');
+hold on
+% plot(Vzr_mac_noasb / max(abs(Vzr_mac_noasb)), 'k--', 'DisplayName', 'OS Model');
+% plot(10*(Vzr_os / max(abs(Vzr_os))-Vzr_mac / max(abs(Vzr_mac)))-1.5, 'b-', 'DisplayName', '10 * diff');
+
+legend;
+% ylim([-1, 1]);
+xlabel('Time step');
+ylabel('Normalized Vzr');
+% title('Comparison of MAC and OS scheme');
+
+
+fig = gcf;
+fig.Units = 'inches';
+fig.Position = [1, 1, 6, 4];
+
+
+
+if ~exist('output', 'dir')
+    mkdir('output');
+end
+
+cfl_str = strrep(sprintf('%.2f', CFL), '.', '_');
+
+
+saveas(gcf, fullfile('output', ['station',sta_name, '.png']));
+print(gcf, fullfile('output', ['station' ,sta_name,'.pdf']), '-dpdf', '-r300');
+
+data = [t; Pr];
+save(fullfile('output', 'station.txt'), 'data', '-ascii');
+end
+
+%% Time-frequency
+fs = 1 / (data(1,2) - data(1,1));  % 采样率
+signal = data(2,:);         % 截取信号
+dt = 1 / fs;
+
+% === 补零 ===
+Npad = 1024;  % 可以根据需要设置为1024或更高
+signal_pad = [zeros(1,Npad), signal, zeros(1,Npad)];
+
+% === 时间向量 ===
+tvec = linspace(0, length(signal_pad)*dt, length(signal_pad));
+
+% === 绘图 ===
+tiledlayout(2,1)
+
+% --- 子图 1：补零后的原始信号 ---
+nexttile
+plot(tvec, signal_pad, 'k')
+xlabel('Time (s)')
+ylabel('Amplitude')
+title('Zero-padded Signal')
+set(gca, 'FontSize', 20)
+grid on
+
+% --- 子图 2：Spectrogram ---
+nexttile
+[s, f, t] = spectrogram(signal_pad, 128, 32, 128, fs, 'yaxis');
+imagesc(t, f, abs(s))
+axis xy
+colormap(jet)
+xlabel('Time (s)')
+ylabel('Frequency (Hz)')
+title('Spectrogram (1024-point window, 512 overlap)')
+set(gca, 'FontSize', 20)
+colorbar
+
+% 可选频率范围限制和参考线
+ylim([0 fc*2])
+yline(fc, 'w--', 'f_c = 5 Hz', 'LineWidth', 2, 'FontSize', 14, 'LabelHorizontalAlignment', 'left')
