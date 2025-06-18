@@ -1,3 +1,12 @@
+% -------------------------------------------------------------------------
+% doppler effect analytical solution
+% Author: Yuxing Pan (panyx2023@mail.sustech.edu.cn)
+% Affiliation: Southern University of Science and Technology (SUSTech)
+% Date: Jun 17, 2025
+% -------------------------------------------------------------------------
+
+
+
 clc; clear;
 
 % Doppler Effect Simulation for a Moving  Source

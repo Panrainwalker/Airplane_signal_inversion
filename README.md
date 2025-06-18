@@ -25,6 +25,16 @@ Below is a representative station's waveform and its time-frequency representati
 
 ![Time-Frequency Analysis](modeling/FD2D/output/tf.jpg)
 
+---
+
+### Model Fit to Observed Frequencies
+
+The following figure shows the comparison between the observed frequency-time points and the fitted model result:
+
+![Model Fit](inversion/modelfit.jpg)
+
+
+
 ## Citation
 This repository reproduces methods from:
 
