@@ -1,5 +1,5 @@
 clc; clear; close all;
-
+addpath(fullfile(pwd, '../modeling'));
 % --- Load observed data ---
 data = load('../../data/911.txt');
 % data = load('../modeling/clicked_points.txt');
