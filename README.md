@@ -1,8 +1,8 @@
-# Airplane Signal Modeling and Inversion 
+# Decoding Complex Flight Kinematics 
 ## Overview
 
-Airplanes create sound and ground vibrations that change in frequency as they move—much like the changing pitch of a passing siren.  
-By analyzing these Doppler patterns recorded by **microphones or seismometers**, or even extracted from **video data**, we can infer not only an aircraft’s **speed and direction**, but also its **acceleration** and **turning motion**.  
+Airplanes create sound and ground vibrations that change in frequency as they move—much like the changing pitch of a passing siren.  By analyzing these Doppler patterns recorded by **microphones or seismometers**, or even extracted from **video data**, we can infer not only an aircraft’s **speed and direction**, but also its **acceleration** and **turning motion**.  
+
 
 This work develops a comprehensive method to extract such detailed flight behavior and validates it using both **field data** and **historical footage**, including the **September 11, 2001 aircraft impact** on the World Trade Center.  
 The results demonstrate how existing **seismic and acoustic data** can be leveraged to monitor and interpret aircraft activity.
@@ -16,9 +16,6 @@ We introduce **complex kinematic source modeling** to simulate realistic aircraf
 - Variable-speed motion with acceleration or deceleration
 
 These kinematic models are implemented in MATLAB (`doppler_fwd_chgdirection.m`, `doppler_fwd_acc.m`).
-
-Example:  
-A turning source with time-dependent velocity and emission angle can reproduce frequency-modulated Doppler patterns observed in real aircraft recordings.
 
 ---
 
