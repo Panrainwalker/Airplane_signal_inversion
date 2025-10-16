@@ -46,7 +46,7 @@ diff = f_obs - f_pred;    % difference between obs and pred
 
 Gm = zeros(length(Time_obs),1); % G for four models (nt,1)
 alpha = 0.01 ; % increment
-
+loss_record(it) = sum(diff.^2);
 m_mid_f = m;
 m_mid_b = m;
 for i = 1:4
