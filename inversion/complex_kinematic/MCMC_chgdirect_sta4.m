@@ -1,5 +1,5 @@
 clc; clear; close all;
-
+addpath(fullfile(pwd, '../modeling'));
 % === Load observed frequency data ===
 data = load('../../data/max_freqs_chg4.txt');
 
