@@ -15,7 +15,7 @@ We introduce **complex kinematic source modeling** to simulate realistic aircraf
 - Curved flight paths (e.g., turning maneuvers)
 - Variable-speed motion with acceleration or deceleration
 
-These kinematic models are implemented in MATLAB (`doppler_fwd_chgdirection.m`, `doppler_fwd_acc.m`).
+These kinematic models are implemented in MATLAB (`./modeling/complex_kinematic_modeling/doppler_fwd_chgdirection.m`, `./modeling/complex_kinematic_modeling/doppler_fwd_acc.m`).
 
 ---
 
@@ -28,6 +28,13 @@ As an advanced application, this work includes **Inversion of the 9/11 aircraft 
 - **MCMC inversion** to estimate the aircraft’s speed, distance, and acceleration parameters.
 
 This inversion demonstrates how acoustic data can recover **flight kinematics** with high precision highlighting the potential of seismoacoustic monitoring for aviation safety, airspace management, and forensic event reconstruction.
+
+**Example:**  
+The 9/11 aircraft inversion can be reproduced by running the MATLAB script:
+
+```bash
+./inversion/complex_kinematic/MCMC_911_overtone.m
+```
 
 ![911](data/inversion_911.png)
 
