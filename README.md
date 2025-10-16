@@ -72,5 +72,10 @@ The following figure shows the comparison between the observed frequency-time po
 _Journal of Geophysical Research: Solid Earth, 123_, 4783-4797.  
 [https://doi.org/10.1029/2017JB015240](https://doi.org/10.1029/2017JB015240)
 
+**Pan, Y. (2025, October).** Aircraft motion signatures: Seismic and acoustic data (version v2) [**dataset**]. Zenodo.  
+doi: [10.5281/zenodo.17310280](https://doi.org/10.5281/zenodo.17310280)  
+
+> **Note:** The dataset provided by Pan, Y. includes the **seismic waveforms** and **two-dimensional finite-difference simulation code (C-version)**
+
 
 
